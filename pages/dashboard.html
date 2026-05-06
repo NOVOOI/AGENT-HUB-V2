@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="no" data-theme="">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Novooi — Google Ads Dashboard</title>
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+
+<!-- ═══ TOAST ══════════════════════════════════════════════════ -->
+<div id="toast"></div>
+
+<!-- ═══ ONBOARDING ═════════════════════════════════════════════ -->
+<div id="onboarding">
+  <div class="ob-panel">
+
+    <div class="ob-step">
+      <div class="ob-logo">N</div>
+      <h2 class="ob-title">Novooi Ads Dashboard</h2>
+      <p class="ob-sub">Profesjonell Google Ads-analyse for Novooi.no</p>
+      <button class="btn btn-primary" id="ob-next-btn">Kom i gang →</button>
+    </div>
+
+    <div class="ob-step" style="display:none">
+      <h3 class="ob-title">Sett opp tilkobling</h3>
+      <p class="ob-sub">Lim inn URL-en til din Cloudflare Worker</p>
+      <input type="url" id="worker-url" class="input" placeholder="https://din-worker.workers.dev" autocomplete="off">
+      <button class="btn btn-primary" style="margin-top:12px" id="ob-next-btn-2">Neste →</button>
+    </div>
+
+    <div class="ob-step" style="display:none">
+      <h3 class="ob-title">Passord</h3>
+      <p class="ob-sub">Skriv inn dashboardets passord for å fortsette</p>
+      <input type="password" id="pw-input" class="input" placeholder="Passord" autocomplete="current-password">
+      <div id="pw-error" class="error-text"></div>
+      <button class="btn btn-primary" style="margin-top:12px" id="check-gate-btn">Logg inn</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ TOPBAR ══════════════════════════════════════════════════ -->
+<header class="topbar">
+  <div class="tb-left">
+    <div class="tb-logo">N</div>
+    <span class="tb-brand">Novooi Ads</span>
+    <span id="top-status" class="tb-status"></span>
+  </div>
+  <div class="tb-right">
+    <input type="url" id="worker-url-tb" class="input input-sm" placeholder="Worker URL" style="width:240px">
+    <input type="date" id="date-from" class="input input-sm">
+    <span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">→</span>
+    <input type="date" id="date-to" class="input input-sm">
+    <button id="fetch-btn" class="btn btn-primary">Hent live data</button>
+    <button id="theme-toggle" class="btn btn-ghost btn-icon" title="Bytt tema">◑</button>
+  </div>
+</header>
+
+<!-- ═══ NAVIGASJON ══════════════════════════════════════════════ -->
+<nav class="main-nav">
+  <button class="nav-btn active" data-page="oversikt">Oversikt</button>
+  <button class="nav-btn" data-page="kampanjer">Kampanjer</button>
+  <button class="nav-btn" data-page="sokeord">Søkeord</button>
+  <button class="nav-btn" data-page="soketermer">Søketermer</button>
+  <button class="nav-btn" data-page="annonser">Annonser</button>
+  <button class="nav-btn" data-page="negative">Negative ord</button>
+  <button class="nav-btn" data-page="sammenlign">Sammenlign</button>
+  <button class="nav-btn" data-page="historikk">Historikk</button>
+  <button class="nav-btn" data-page="strukturkart">Strukturkart</button>
+  <button class="nav-btn" data-page="ai">AI-verktøy</button>
+  <button class="nav-btn" data-page="varsling">Varsling & logg</button>
+  <button class="nav-btn" data-page="rapport">Rapport</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SIDER
+════════════════════════════════════════════════════════════════ -->
+<main class="main-content">
+
+  <!-- ── OVERSIKT ─────────────────────────────────────────────── -->
+  <section id="page-oversikt" class="page-section active">
+    <div class="page-header">
+      <h1 class="page-title">Oversikt</h1>
+    </div>
+
+    <div id="stats-grid" class="stats-grid"></div>
+
+    <div class="two-col">
+      <div class="block">
+        <div class="block-title">Budsjett</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <label class="label">Månedlig budsjett:</label>
+          <input type="number" id="budget-input" class="input input-sm" value="40000" style="width:120px">
+          <span class="label">kr</span>
+        </div>
+        <div id="budget-content"></div>
+      </div>
+      <div class="block">
+        <div class="block-title">ROAS-kalkulator</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <label class="label">Gj.sn. ordreverdi:</label>
+          <input type="number" id="roas-input" class="input input-sm" value="3500" style="width:120px">
+          <span class="label">kr</span>
+        </div>
+        <div id="roas-content"></div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div id="checklist-block"></div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">Kampanje-helse</div>
+      <div id="health-grid" class="health-grid"></div>
+    </div>
+
+    <div class="two-col">
+      <div class="block">
+        <div class="block-title">Trafikk-trakt (topp 3)</div>
+        <div id="funnel-content"></div>
+      </div>
+      <div class="block">
+        <div class="block-title">Alle kampanjer</div>
+        <div class="table-wrap">
+          <div id="top-campaigns-table"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── KAMPANJER ─────────────────────────────────────────────── -->
+  <section id="page-kampanjer" class="page-section">
+    <div class="page-header">
+      <h1 class="page-title">Kampanjer</h1>
+      <div class="page-actions">
+        <input type="text" id="camp-search" class="input input-sm table-search" placeholder="Søk kampanjer...">
+        <button id="camp-export-btn" class="btn btn-ghost">↓ CSV</button>
+      </div>
+    </div>
+    <div class="block">
+      <div class="table-wrap">
+        <table id="campaigns-tbl"></table>
+      </div>
+    </div>
+    <div class="block">
+      <div class="block-title">AI-analyse av kampanjer</div>
+      <button id="analyse-campaigns-btn" class="btn btn-primary">Analyser med AI</button>
+      <div id="analyse-campaigns-status" class="status"></div>
+      <div id="analyse-campaigns-out" style="margin-top:16px"></div>
+    </div>
+  </section>
+
+  <!-- ── SØKEORD ───────────────────────────────────────────────── -->
+  <section id="page-sokeord" class="page-section">
+    <div class="page-header">
+      <h1 class="page-title">Søkeord</h1>
+      <div class="page-actions">
+        <input type="text" id="kw-search" class="input input-sm table-search" placeholder="Søk søkeord...">
+        <select id="kw-match-filter" class="input input-sm">
+          <option value="">Alle match-typer</option>
+          <option value="EXACT">Eksakt</option>
+          <option value="PHRASE">Frase</option>
+          <option value="BROAD">Bred</option>
+        </select>
+        <select id="kw-sort-field" class="input input-sm">
+          <option value="costMicros">Sorter: Forbruk</option>
+          <option value="clicks">Sorter: Klikk</option>
+          <option value="conversions">Sorter: Konv.</option>
+          <option value="impressions">Sorter: Visninger</option>
+        </select>
+        <select id="kw-qs-filter" class="input input-sm">
+          <option value="">Alle QS</option>
+          <option value="low">QS 1-4 (lav)</option>
+          <option value="mid">QS 5-7 (middels)</option>
+          <option value="high">QS 8-10 (høy)</option>
+        </select>
+        <span id="kw-count" class="count-badge"></span>
+        <button id="kw-toggle-btn" class="btn btn-ghost">Flat visning</button>
+        <button id="kw-export-btn" class="btn btn-ghost">↓ CSV</button>
+      </div>
+    </div>
+
+    <div id="keywords-view"></div>
+
+    <div class="block" style="margin-top:24px">
+      <div class="block-title">QS-forbedringsguide</div>
+      <div id="qs-guide-content"></div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">AI-analyse av søkeord</div>
+      <button id="analyse-keywords-btn" class="btn btn-primary">Analyser med AI</button>
+      <div id="analyse-keywords-status" class="status"></div>
+      <div id="analyse-keywords-out" style="margin-top:16px"></div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">Søkeordforslag fra AI</div>
+      <button id="kw-suggest-btn" class="btn btn-secondary">Foreslå nye søkeord</button>
+      <div id="kw-suggest-status" class="status"></div>
+      <div id="kw-suggest-out" style="margin-top:16px"></div>
+    </div>
+  </section>
+
+  <!-- ── SØKETERMER ─────────────────────────────────────────────── -->
+  <section id="page-soketermer" class="page-section">
+    <div class="page-header">
+      <h1 class="page-title">Søketermer</h1>
+      <div class="page-actions">
+        <button id="st-fetch-btn" class="btn btn-primary">Hent søketermer</button>
+        <input type="text" id="st-search" class="input input-sm table-search" placeholder="Søk termer...">
+        <select id="st-status-filter" class="input input-sm">
+          <option value="">Alle statuser</option>
+          <option value="ADDED">Lagt til</option>
+          <option value="EXCLUDED">Ekskludert</option>
+          <option value="NONE">Ingen</option>
+        </select>
+        <select id="st-sort-field" class="input input-sm">
+          <option value="costMicros">Forbruk</option>
+          <option value="clicks">Klikk</option>
+          <option value="conversions">Konv.</option>
+          <option value="impressions">Visninger</option>
+        </select>
+        <select id="st-campaign-filter" class="input input-sm">
+          <option value="">Alle kampanjer</option>
+        </select>
+        <span id="st-count" class="count-badge"></span>
+        <button id="st-export-btn" class="btn btn-ghost">↓ CSV</button>
+      </div>
+    </div>
+    <div id="st-analyse-status" class="status"></div>
+    <div id="st-view"></div>
+
+    <div class="block" style="margin-top:24px">
+      <div class="block-title">AI-analyse av søketermer</div>
+      <button id="st-analyse-btn" class="btn btn-primary">Analyser søketermer</button>
+      <div id="st-analyse-out" style="margin-top:16px"></div>
+    </div>
+  </section>
+
+  <!-- ── ANNONSEGRUPPER ────────────────────────────────────────── -->
+  <section id="page-annonser" class="page-section">
+    <div class="page-header">
+      <h1 class="page-title">Annonsegrupper & Annonser</h1>
+    </div>
+
+    <div class="block">
+      <div class="block-title" style="margin-bottom:12px">Annonsegrupper</div>
+      <div class="page-actions" style="margin-bottom:12px">
+        <input type="text" id="adgroups-search" class="input input-sm table-search" placeholder="Søk annonsegrupper...">
+        <button id="adgroups-export-btn" class="btn btn-ghost">↓ CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table id="adgroups-tbl"></table>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="block-title" style="margin-bottom:12px">Annonser</div>
+      <div class="page-actions" style="margin-bottom:12px">
+        <input type="text" id="ads-search" class="input input-sm table-search" placeholder="Søk annonser...">
+        <button id="ads-export-btn" class="btn btn-ghost">↓ CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table id="ads-tbl"></table>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">Annonsetekst-generator</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+        <input type="text" id="ad-theme-input" class="input input-sm" placeholder="Tema (f.eks. Norsk designmøbel)" style="flex:1;min-width:200px">
+        <input type="text" id="ad-url-input" class="input input-sm" placeholder="URL (novooi.com)" style="width:200px">
+      </div>
+      <div class="tone-grid">
+        <button class="tone-card active" data-tone="brutal">
+          <div class="tone-name">Direkte</div>
+          <div class="tone-desc">Faktabasert, kortfattet</div>
+        </button>
+        <button class="tone-card" data-tone="warm">
+          <div class="tone-name">Varm</div>
+          <div class="tone-desc">Innbydende, hjemmefølelse</div>
+        </button>
+        <button class="tone-card" data-tone="premium">
+          <div class="tone-name">Premium</div>
+          <div class="tone-desc">Eksklusiv, raffinert</div>
+        </button>
+        <button class="tone-card" data-tone="playful">
+          <div class="tone-name">Leken</div>
+          <div class="tone-desc">Frisk, energisk</div>
+        </button>
+        <button class="tone-card" data-tone="urgent">
+          <div class="tone-name">Urgent</div>
+          <div class="tone-desc">Handlingsfremmende</div>
+        </button>
+      </div>
+      <button id="gen-ad-btn" class="btn btn-primary" style="margin-top:12px">Generer annonsevarianter</button>
+      <div id="gen-ad-status" class="status"></div>
+      <div id="gen-ad-out" style="margin-top:16px"></div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">AI-analyse av annonser</div>
+      <button id="analyse-ads-btn" class="btn btn-primary">Analyser med AI</button>
+      <div id="analyse-ads-status" class="status"></div>
+      <div id="analyse-ads-out" style="margin-top:16px"></div>
+    </div>
+  </section>
+
+  <!-- ── NEGATIVE SØKEORD ──────────────────────────────────────── -->
+  <section id="page-negative" class="page-section">
+    <div class="page-header">
+      <h1 class="page-title">Negative søkeord</h1>
+    </div>
+
+    <div class="block">
+      <div class="block-title">Legg til manuelt</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+        <input type="text" id="neg-kw-input" class="input" placeholder="Negativt søkeord..." style="flex:1;min-width:200px">
+        <select id="neg-match-select" class="input input-sm">
+          <option value="EXACT">Eksakt</option>
+          <option value="PHRASE">Frase</option>
+          <option value="BROAD">Bred</option>
+        </select>
+        <select id="neg-camp-select" class="input input-sm">
+          <option value="Alle">Alle kampanjer</option>
+        </select>
+        <button id="neg-add-btn" class="btn btn-primary">Legg til</button>
+      </div>
+      <div id="neg-added-list"></div>
+      <div style="margin-top:12px;display:flex;gap:10px">
+        <button id="neg-export-btn" class="btn btn-ghost">↓ Eksporter CSV</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">AI-genererte forslag</div>
+      <p class="text-muted" style="font-size:13px;margin-bottom:12px">
+        Basert på søketermer uten konverteringer. Hent søketermer-data for beste resultater.
+      </p>
+      <button id="gen-neg-btn" class="btn btn-secondary">Generer forslag fra AI</button>
+      <div id="gen-neg-status" class="status"></div>
+      <div id="gen-neg-out" style="margin-top:16px"></div>
+    </div>
+  </section>
+
+  <!-- ── SAMMENLIGN ─────────────────────────────────────────────── -->
+  <section id="page-sammenlign" class="page-section">
+    <div class="page-header">
+      <h1 class="page-title">Periodesammenligning</h1>
+    </div>
+    <div class="block">
+      <div class="two-col" style="gap:16px;margin-bottom:16px">
+        <div>
+          <div class="label" style="margin-bottom:8px">Periode 1</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="date" id="cmp-from1" class="input input-sm">
+            <span class="label">→</span>
+            <input type="date" id="cmp-to1" class="input input-sm">
+          </div>
+        </div>
+        <div>
+          <div class="label" style="margin-bottom:8px">Periode 2</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="date" id="cmp-from2" class="input input-sm">
+            <span class="label">→</span>
+            <input type="date" id="cmp-to2" class="input input-sm">
+          </div>
+        </div>
+      </div>
+      <button id="cmp-run-btn" class="btn btn-primary">Sammenlign perioder</button>
+      <div id="cmp-status" class="status"></div>
+      <div id="cmp-out" style="margin-top:16px"></div>
+    </div>
+  </section>
+
+  <!-- ── HISTORIKK ─────────────────────────────────────────────── -->
+  <section id="page-historikk" class="page-section">
+    <div class="page-header">
+      <h1 class="page-title">Historikk</h1>
+      <div class="page-actions">
+        <button id="hist-fetch-btn" class="btn btn-primary">Hent historikk</button>
+        <button id="hist-snapshot-btn" class="btn btn-secondary">Lagre snapshot</button>
+      </div>
+    </div>
+    <div id="hist-status" class="status" style="margin-bottom:16px"></div>
+    <div id="hist-charts" class="hist-charts-grid"></div>
+    <div id="hist-table-block" class="block" style="display:none;margin-top:24px">
+      <div class="block-title">Historikk-tabell</div>
+      <div class="table-wrap">
+        <table id="hist-tbl"></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STRUKTURKART ─────────────────────────────────────────── -->
+  <section id="page-strukturkart" class="page-section">
+    <div class="page-header">
+      <h1 class="page-title">Kontostruktur</h1>
+      <div class="page-actions">
+        <button id="struct-fetch-btn" class="btn btn-primary">Hent struktur</button>
+        <input type="text" id="struct-search-input" class="input input-sm" placeholder="Søk i struktur...">
+      </div>
+    </div>
+    <div id="struct-status" class="status" style="margin-bottom:16px"></div>
+    <div id="struct-content"></div>
+  </section>
+
+  <!-- ── AI-VERKTØY ─────────────────────────────────────────────── -->
+  <section id="page-ai" class="page-section">
+    <div class="page-header">
+      <h1 class="page-title">AI-verktøy</h1>
+    </div>
+
+    <div class="block">
+      <div class="block-title">Chat med AI-strateg</div>
+      <div id="chat-out" class="chat-container"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <textarea id="chat-input" class="input" rows="2" placeholder="Still et spørsmål om kampanjene dine..." style="flex:1;resize:vertical"></textarea>
+        <button id="chat-send-btn" class="btn btn-primary" style="align-self:flex-end">Send</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">Kampanjestruktur-generator</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+        <div style="flex:1;min-width:160px">
+          <label class="label">Månedlig budsjett (kr)</label>
+          <input type="number" id="struct-budget-input" class="input input-sm" value="40000" style="width:100%;margin-top:4px">
+        </div>
+        <div style="flex:2;min-width:240px">
+          <label class="label">Spesielt fokus (valgfritt)</label>
+          <input type="text" id="struct-focus-input" class="input input-sm" placeholder="f.eks. soveromsmøbler" style="width:100%;margin-top:4px">
+        </div>
+      </div>
+      <button id="gen-structure-btn" class="btn btn-primary">Generer kampanjestruktur</button>
+      <div id="gen-structure-status" class="status"></div>
+      <div id="gen-structure-out" style="margin-top:16px"></div>
+    </div>
+
+    <div class="block">
+      <div class="block-title">Kampanjehukommelse</div>
+      <p class="text-muted" style="font-size:13px;margin-bottom:12px">Lagre ukentlige snapshots for å spore utvikling over tid.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button id="save-memory-btn" class="btn btn-secondary">Lagre denne ukens snapshot</button>
+        <button id="load-memory-btn" class="btn btn-ghost">Vis historikk</button>
+      </div>
+      <div id="memory-status" class="status"></div>
+      <div id="memory-out" style="margin-top:16px"></div>
+    </div>
+  </section>
+
+  <!-- ── VARSLING & LOGG ────────────────────────────────────────── -->
+  <section id="page-varsling" class="page-section">
+    <div class="page-header">
+      <h1 class="page-title">Varsling & aktivitetslogg</h1>
+    </div>
+
+    <div class="two-col">
+      <div class="block">
+        <div class="block-title">Daglig varsel (test)</div>
+        <p class="text-muted" style="font-size:13px;margin-bottom:12px">Forhåndsvis dagens AI-genererte statusvarsel.</p>
+        <button id="test-daily-btn" class="btn btn-secondary">Generer daglig varsel</button>
+        <div id="test-daily-status" class="status"></div>
+        <div id="test-daily-out" style="margin-top:16px"></div>
+      </div>
+
+      <div class="block">
+        <div class="block-title">Månedlig rapport-tekst (test)</div>
+        <p class="text-muted" style="font-size:13px;margin-bottom:12px">Forhåndsvis AI-generert rapport-oppsummering.</p>
+        <button id="test-monthly-btn" class="btn btn-secondary">Generer rapport-tekst</button>
+        <div id="test-monthly-status" class="status"></div>
+        <div id="test-monthly-out" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="block-title">Aktivitetslogg</div>
+        <button id="clear-log-btn" class="btn btn-ghost btn-sm">Tøm logg</button>
+      </div>
+      <div id="log-content" class="log-container">
+        <div class="log-empty">Ingen aktivitet ennå.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── RAPPORT ───────────────────────────────────────────────── -->
+  <section id="page-rapport" class="page-section">
+    <div class="page-header">
+      <h1 class="page-title">Rapport</h1>
+    </div>
+
+    <div class="block">
+      <div class="block-title">PDF-rapport</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:16px">
+
+        <div>
+          <label class="label">Periode</label>
+          <input type="text" id="report-period" class="input input-sm" value="Siste 30 dager" style="width:100%;margin-top:4px">
+        </div>
+
+        <div>
+          <label class="label">Klientnavn</label>
+          <input type="text" id="rpt-client" class="input input-sm" value="Novooi" style="width:100%;margin-top:4px">
+        </div>
+
+        <div style="grid-column:1/-1">
+          <label class="label">AI-tekst / innledning (valgfritt)</label>
+          <textarea id="report-ai-text" class="input" rows="4" placeholder="Lim inn AI-generert analyse her, eller la den stå tom..." style="width:100%;margin-top:4px;resize:vertical"></textarea>
+        </div>
+
+        <div>
+          <label class="label" style="display:block;margin-bottom:8px">Innhold</label>
+          <label class="check-label"><input type="checkbox" id="rpt-campaigns" checked> Kampanjer</label><br>
+          <label class="check-label"><input type="checkbox" id="rpt-keywords" checked> Søkeord (topp 20)</label><br>
+          <label class="check-label"><input type="checkbox" id="rpt-recommendations" checked> Anbefalinger</label><br>
+          <label class="check-label"><input type="checkbox" id="rpt-branding" checked> Sidehode & bunntekst</label>
+        </div>
+      </div>
+
+      <button id="gen-report-btn" class="btn btn-primary">Generer PDF-rapport</button>
+      <div id="report-status" class="status"></div>
+    </div>
+  </section>
+
+</main>
+
+<script type="module" src="../js/app.js"></script>
+</body>
+</html>
