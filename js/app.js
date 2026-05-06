@@ -411,7 +411,14 @@ function bindEvents() {
   // ── Auth ─────────────────────────────────────────────────────────
   on('pw-input', 'keydown', e => e.key === 'Enter' && checkGate());
   on('check-gate-btn', 'click', checkGate);
-  on('ob-next-btn', 'click', obNext);
+  on('ob-next-btn',   'click', obNext);
+  on('ob-next-btn-2', 'click', () => {
+    // Kopier worker-url fra onboarding-input til topbar-input
+    const obUrl = document.getElementById('worker-url')?.value.trim();
+    const tbUrl = document.getElementById('worker-url-tb');
+    if (obUrl && tbUrl) tbUrl.value = obUrl;
+    obNext();
+  });
   on('close-ob-btn', 'click', closeOnboarding);
   on('theme-toggle', 'click', toggleDark);
 
