@@ -52,7 +52,11 @@ export function genSpark(camp) {
 
 // ═══ WORKER / FETCH ═══════════════════════════════════════════════
 export function getWorker() {
-  let v = document.getElementById('worker-url')?.value.trim().replace(/\/$/, '');
+  // Sjekk topbar-input først, fallback til onboarding-input
+  const raw = document.getElementById('worker-url-tb')?.value.trim()
+    || document.getElementById('worker-url')?.value.trim()
+    || '';
+  let v = raw.replace(/\/$/, '');
   if (v && !v.startsWith('http')) v = 'https://' + v;
   return v;
 }
